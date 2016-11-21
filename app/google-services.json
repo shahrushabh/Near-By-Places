@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "608708327757",
+    "project_id": "curious-potato-1479421711386"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:608708327757:android:ee2222d2d3276ebd",
+        "android_client_info": {
+          "package_name": "com.rushabhs.curiouspotato"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "608708327757-kis6nb93lh30es0fjbqvce6n1vneh25n.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.rushabhs.curiouspotato",
+            "certificate_hash": "A99EBB8447FA2C56DDEBFE6B21E3D307BAC7DC2A"
+          }
+        },
+        {
+          "client_id": "608708327757-vq23hu65tvafc4ag2dmltubmn8dgjqul.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBp8w4tlHUBUwRMB4ihlC9lt7sd2VJNmi0"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 1
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

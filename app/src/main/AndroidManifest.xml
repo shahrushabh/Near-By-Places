@@ -2,8 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.rushabhs.curiouspotato">
 
-    <uses-sdk android:minSdkVersion="14" />
-    <permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <!--<uses-sdk android:minSdkVersion="14" />-->
+    <!--<permission android:name="android.permission.ACCESS_FINE_LOCATION" />-->
 
     <!-- To auto-complete the email text field in the login form with the user's emails -->
     <uses-permission android:name="android.permission.GET_ACCOUNTS" />

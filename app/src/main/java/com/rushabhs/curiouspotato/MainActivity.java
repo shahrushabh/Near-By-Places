@@ -9,6 +9,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.app.NavUtils;
 import android.support.v4.app.TaskStackBuilder;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
 import android.app.ActionBar;
 import android.os.Bundle;
@@ -18,12 +19,17 @@ import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.location.places.PlaceLikelihood;
+import com.google.android.gms.location.places.PlaceLikelihoodBuffer;
 import com.google.android.gms.location.places.PlacePhotoMetadata;
 import com.google.android.gms.location.places.PlacePhotoMetadataBuffer;
 import com.google.android.gms.location.places.PlacePhotoMetadataResult;
@@ -44,7 +50,8 @@ public class MainActivity extends FragmentActivity  implements GoogleApiClient.O
      * allowing navigation between objects in a potentially large collection.
      */
     CollectionPagerAdapter mCollectionPagerAdapter;
-    private GoogleApiClient mGoogleApiClient;
+    public static GoogleApiClient mGoogleApiClient;
+    private ArrayAdapter<String> placeTypes;
 
     /**
      * The {@link android.support.v4.view.ViewPager} that will display the object collection.
@@ -61,13 +68,6 @@ public class MainActivity extends FragmentActivity  implements GoogleApiClient.O
         // ViewPager and its adapters use support library fragments, so we must use
         // getSupportFragmentManager.
         mCollectionPagerAdapter = new CollectionPagerAdapter(getSupportFragmentManager());
-
-        // Set up action bar.
-        final ActionBar actionBar = getActionBar();
-
-        // Specify that the Home button should show an "Up" caret, indicating that touching the
-        // button will take the user one step up in the application's hierarchy.
-//        actionBar.setDisplayHomeAsUpEnabled(true);
 
         // Set up the ViewPager, attaching the adapter.
         mViewPager = (ViewPager) findViewById(R.id.pager);
@@ -113,7 +113,7 @@ public class MainActivity extends FragmentActivity  implements GoogleApiClient.O
      */
     public static class CollectionPagerAdapter extends FragmentStatePagerAdapter {
 
-        private String[] types = {"Cafe", "Airport", "Bank", "School", "Bar", "Lodging", "Pharmacy"};
+        private String[] types = {"All", "Cafe", "Airport", "Bank", "School", "Bar", "Lodging", "Pharmacy"};
 
         public CollectionPagerAdapter(FragmentManager fm) {
             super(fm);
@@ -140,7 +140,7 @@ public class MainActivity extends FragmentActivity  implements GoogleApiClient.O
     }
 
     /**
-     * A dummy fragment representing a section of the app, but that simply displays dummy text.
+     * A dummy fragment representing a section of the app, but that simply displays types of places.
      */
     public static class CategoryFragment extends Fragment {
 
@@ -151,11 +151,27 @@ public class MainActivity extends FragmentActivity  implements GoogleApiClient.O
 //            View rootView = inflater.inflate(R.layout.card_list_view, container, false);
             View rootView = inflater.inflate(R.layout.card_object_view, container, false);
             Bundle args = getArguments();
-//            ((ListView) rootView.findViewById(R.id.list)).setAdapter(null);
-            ((TextView) rootView.findViewById(R.id.text1)).setText(args.getString(OBJECT_TYPE));
             Log.d("Textview value: ", args.getString(OBJECT_TYPE));
             ImageView img = ((ImageView) rootView.findViewById(R.id.placeImage));
-//            new GetPlacesTask(img.getMaxWidth(), img.getMaxHeight()).execute("ChIJrTLr-GyuEmsRBfy61i59si0");
+
+            try{
+                PendingResult<PlaceLikelihoodBuffer> result = Places.PlaceDetectionApi.getCurrentPlace(mGoogleApiClient, null);
+                result.setResultCallback(new ResultCallback<PlaceLikelihoodBuffer>() {
+                    @Override
+                    public void onResult(PlaceLikelihoodBuffer likelyPlaces) {
+                        for (PlaceLikelihood placeLikelihood : likelyPlaces) {
+                            Log.d("", String.format("Place '%s' has likelihood: %g",
+                                    placeLikelihood.getPlace().getName(),
+                                    placeLikelihood.getLikelihood()));
+                        }
+                        likelyPlaces.release();
+                    }
+                });
+            } catch (SecurityException e){
+                Log.e("Error occurred: ", e.getMessage());
+            }
+
+            ((MainActivity) getActivity()).new GetPlacesTask(img.getMaxWidth(), img.getMaxHeight()).execute("ChIJGVshXgp67ocR6Els7jrt2Nc");
             return rootView;
         }
     }
@@ -191,7 +207,7 @@ public class MainActivity extends FragmentActivity  implements GoogleApiClient.O
                     PlacePhotoMetadata photo = photoMetadataBuffer.get(0);
                     CharSequence attribution = photo.getAttributions();
                     // Load a scaled bitmap for this photo.
-                    Bitmap image = photo.getScaledPhoto(mGoogleApiClient, maxWidth, maxHeight).await()
+                    Bitmap image = photo.getPhoto(mGoogleApiClient).await()
                             .getBitmap();
 
                     attributedPhoto = new AttributedPhoto(attribution, image);
@@ -211,6 +227,8 @@ public class MainActivity extends FragmentActivity  implements GoogleApiClient.O
                 TextView mText = ((TextView) findViewById(R.id.text1));
                 // Successfully downloaded the photo. Display it on the screen.
                 ((ImageView) findViewById(R.id.placeImage)).setImageBitmap(result.bitmap);
+
+                Log.d("Result type is : ", result.getClass().toString());
                 // Display the attribution as HTML content if set.
                 if (result.attribution == null) {
                     mText.setVisibility(View.GONE);
@@ -237,3 +255,7 @@ public class MainActivity extends FragmentActivity  implements GoogleApiClient.O
         }
     }
 }
+
+//            ((ListView) rootView.findViewById(R.id.list)).setAdapter(null);
+//            ((TextView) rootView.findViewById(R.id.text1)).setText(args.getString(OBJECT_TYPE));
+

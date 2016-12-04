@@ -1,8 +1,13 @@
 package com.rushabhs.curiouspotato;
 
+import android.*;
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.location.Location;
 import android.os.AsyncTask;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
@@ -28,6 +33,8 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.PendingResult;
 import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.places.Place;
 import com.google.android.gms.location.places.PlaceLikelihood;
 import com.google.android.gms.location.places.PlaceLikelihoodBuffer;
 import com.google.android.gms.location.places.PlacePhotoMetadata;
@@ -49,10 +56,10 @@ public class MainActivity extends FragmentActivity  implements GoogleApiClient.O
      * state in the process. This is important to conserve memory and is a best practice when
      * allowing navigation between objects in a potentially large collection.
      */
+    private static final int REQUEST_LOCATION = 2;
     CollectionPagerAdapter mCollectionPagerAdapter;
-    public static GoogleApiClient mGoogleApiClient;
-    private ArrayAdapter<String> placeTypes;
-
+    private GoogleApiClient mGoogleApiClient;
+    private static ArrayList<Place> places;
     /**
      * The {@link android.support.v4.view.ViewPager} that will display the object collection.
      */
@@ -77,35 +84,82 @@ public class MainActivity extends FragmentActivity  implements GoogleApiClient.O
                 .Builder(this)
                 .addApi(Places.GEO_DATA_API)
                 .addApi(Places.PLACE_DETECTION_API)
+                .addApi(LocationServices.API)
                 .enableAutoManage(this, this)
                 .build();
+
+        getNearByPlaces();
+        new GetPlacesTask().execute("ChIJGVshXgp67ocR6Els7jrt2Nc");
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case android.R.id.home:
-                // This is called when the Home (Up) button is pressed in the action bar.
-                // Create a simple intent that starts the hierarchical parent activity and
-                // use NavUtils in the Support Package to ensure proper handling of Up.
-                Intent upIntent = new Intent(this, MainActivity.class);
-                if (NavUtils.shouldUpRecreateTask(this, upIntent)) {
-                    // This activity is not part of the application's task, so create a new task
-                    // with a synthesized back stack.
-                    TaskStackBuilder.from(this)
-                            // If there are ancestor activities, they should be added here.
-                            .addNextIntent(upIntent)
-                            .startActivities();
-                    finish();
-                } else {
-                    // This activity is part of the application's task, so simply
-                    // navigate up to the hierarchical parent activity.
-                    NavUtils.navigateUpTo(this, upIntent);
-                }
-                return true;
-        }
-        return super.onOptionsItemSelected(item);
+    public void onConnectionFailed(ConnectionResult result) {
+        // An unresolvable error has occurred and a connection to Google APIs
+        // could not be established. Display an error message, or handle
+        // the failure silently
+
+        // ...
     }
+
+    private void getNearByPlaces(){
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // Check Permissions Now
+//            if (ActivityCompat.shouldShowRequestPermissionRationale(this, android.Manifest.permission.ACCESS_FINE_LOCATION)) {
+//                // Display UI and wait for user interaction
+//            } else {
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 2);
+//            }
+        } else {
+            // permission has been granted, continue as usual
+            PendingResult<PlaceLikelihoodBuffer> result = Places.PlaceDetectionApi.getCurrentPlace(mGoogleApiClient, null);
+            result.setResultCallback(new ResultCallback<PlaceLikelihoodBuffer>() {
+                @Override
+                public void onResult(PlaceLikelihoodBuffer likelyPlaces) {
+                    for (PlaceLikelihood placeLikelihood : likelyPlaces) {
+                        Log.d("", String.format("Place '%s' with id '%s' has likelihood: %g",
+                                placeLikelihood.getPlace().getName(),
+                                placeLikelihood.getPlace().getId(),
+                                placeLikelihood.getLikelihood()));
+                    }
+                    likelyPlaces.release();
+                }
+            });
+        }
+    }
+
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        if (requestCode == REQUEST_LOCATION) {
+            if(grantResults.length == 1 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                getNearByPlaces();
+            }
+        }
+    }
+
+//    @Override
+//    public boolean onOptionsItemSelected(MenuItem item) {
+//        switch (item.getItemId()) {
+//            case android.R.id.home:
+//                // This is called when the Home (Up) button is pressed in the action bar.
+//                // Create a simple intent that starts the hierarchical parent activity and
+//                // use NavUtils in the Support Package to ensure proper handling of Up.
+//                Intent upIntent = new Intent(this, MainActivity.class);
+//                if (NavUtils.shouldUpRecreateTask(this, upIntent)) {
+//                    // This activity is not part of the application's task, so create a new task
+//                    // with a synthesized back stack.
+//                    TaskStackBuilder.from(this)
+//                            // If there are ancestor activities, they should be added here.
+//                            .addNextIntent(upIntent)
+//                            .startActivities();
+//                    finish();
+//                } else {
+//                    // This activity is part of the application's task, so simply
+//                    // navigate up to the hierarchical parent activity.
+//                    NavUtils.navigateUpTo(this, upIntent);
+//                }
+//                return true;
+//        }
+//        return super.onOptionsItemSelected(item);
+//    }
 
     /**
      * A {@link android.support.v4.app.FragmentStatePagerAdapter} that returns a fragment
@@ -151,71 +205,45 @@ public class MainActivity extends FragmentActivity  implements GoogleApiClient.O
 //            View rootView = inflater.inflate(R.layout.card_list_view, container, false);
             View rootView = inflater.inflate(R.layout.card_object_view, container, false);
             Bundle args = getArguments();
-            Log.d("Textview value: ", args.getString(OBJECT_TYPE));
-            ImageView img = ((ImageView) rootView.findViewById(R.id.placeImage));
-
-            try{
-                PendingResult<PlaceLikelihoodBuffer> result = Places.PlaceDetectionApi.getCurrentPlace(mGoogleApiClient, null);
-                result.setResultCallback(new ResultCallback<PlaceLikelihoodBuffer>() {
-                    @Override
-                    public void onResult(PlaceLikelihoodBuffer likelyPlaces) {
-                        for (PlaceLikelihood placeLikelihood : likelyPlaces) {
-                            Log.d("", String.format("Place '%s' has likelihood: %g",
-                                    placeLikelihood.getPlace().getName(),
-                                    placeLikelihood.getLikelihood()));
-                        }
-                        likelyPlaces.release();
-                    }
-                });
-            } catch (SecurityException e){
-                Log.e("Error occurred: ", e.getMessage());
-            }
-
-            ((MainActivity) getActivity()).new GetPlacesTask(img.getMaxWidth(), img.getMaxHeight()).execute("ChIJGVshXgp67ocR6Els7jrt2Nc");
-            return rootView;
+            Log.d("TextView value: ", args.getString(OBJECT_TYPE));
+            ((TextView) rootView.findViewById(R.id.text1)).setText(args.getString(OBJECT_TYPE));
+           return rootView;
         }
-    }
-
-    @Override
-    public void onConnectionFailed(ConnectionResult result) {
-        // An unresolvable error has occurred and a connection to Google APIs
-        // could not be established. Display an error message, or handle
-        // the failure silently
-
-        // ...
     }
 
     private class GetPlacesTask extends AsyncTask<String, Void, GetPlacesTask.AttributedPhoto> {
         private int maxHeight;
         private int maxWidth;
+        public GetPlacesTask(){
+        }
         public GetPlacesTask(int width, int height){
             maxWidth = width;
             maxHeight = height;
         }
         protected AttributedPhoto doInBackground(String... s) {
             if(s.length != 1){return null;}
-            final String placeId = s[0];
-            AttributedPhoto attributedPhoto = null;
-
-            PlacePhotoMetadataResult result = Places.GeoDataApi
-                    .getPlacePhotos(mGoogleApiClient, placeId).await();
-
-            if (result.getStatus().isSuccess()) {
-                PlacePhotoMetadataBuffer photoMetadataBuffer = result.getPhotoMetadata();
-                if (photoMetadataBuffer.getCount() > 0 && !isCancelled()) {
-                    // Get the first bitmap and its attributions.
-                    PlacePhotoMetadata photo = photoMetadataBuffer.get(0);
-                    CharSequence attribution = photo.getAttributions();
-                    // Load a scaled bitmap for this photo.
-                    Bitmap image = photo.getPhoto(mGoogleApiClient).await()
-                            .getBitmap();
-
-                    attributedPhoto = new AttributedPhoto(attribution, image);
-                }
-                // Release the PlacePhotoMetadataBuffer.
-                photoMetadataBuffer.release();
-            }
-            return attributedPhoto;
+            return null;
+//            final String placeId = s[0];
+//            AttributedPhoto attributedPhoto = null;
+//
+//            PlacePhotoMetadataResult result = Places.GeoDataApi.getPlacePhotos(mGoogleApiClient, placeId).await();
+//
+//            if (result.getStatus().isSuccess()) {
+//                PlacePhotoMetadataBuffer photoMetadataBuffer = result.getPhotoMetadata();
+//                if (photoMetadataBuffer.getCount() > 0 && !isCancelled()) {
+//                    // Get the first bitmap and its attributions.
+//                    PlacePhotoMetadata photo = photoMetadataBuffer.get(0);
+//                    CharSequence attribution = photo.getAttributions();
+//                    // Load a scaled bitmap for this photo.
+//                    Bitmap image = photo.getPhoto(mGoogleApiClient).await()
+//                            .getBitmap();
+//
+//                    attributedPhoto = new AttributedPhoto(attribution, image);
+//                }
+//                // Release the PlacePhotoMetadataBuffer.
+//                photoMetadataBuffer.release();
+//            }
+//            return attributedPhoto;
         }
 
         protected void onProgressUpdate(Void... progress) {
@@ -228,7 +256,6 @@ public class MainActivity extends FragmentActivity  implements GoogleApiClient.O
                 // Successfully downloaded the photo. Display it on the screen.
                 ((ImageView) findViewById(R.id.placeImage)).setImageBitmap(result.bitmap);
 
-                Log.d("Result type is : ", result.getClass().toString());
                 // Display the attribution as HTML content if set.
                 if (result.attribution == null) {
                     mText.setVisibility(View.GONE);

@@ -26,7 +26,7 @@ import com.google.android.gms.location.places.PlaceLikelihoodBuffer;
 import com.google.android.gms.location.places.Places;
 import java.util.ArrayList;
 
-public class MainActivity extends FragmentActivity  implements GoogleApiClient.OnConnectionFailedListener {
+public class MainActivity extends FragmentActivity implements GoogleApiClient.OnConnectionFailedListener {
 
     /**
      * The {@link android.support.v4.view.PagerAdapter} that will provide fragments representing
@@ -49,11 +49,6 @@ public class MainActivity extends FragmentActivity  implements GoogleApiClient.O
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Create an adapter that when requested, will return a fragment representing an object in
-        // the collection.
-        //
-        // ViewPager and its adapters use support library fragments, so we must use
-        // getSupportFragmentManager.
         mCollectionPagerAdapter = new CollectionPagerAdapter(getSupportFragmentManager());
 
         // Set up the ViewPager, attaching the adapter.
@@ -67,7 +62,6 @@ public class MainActivity extends FragmentActivity  implements GoogleApiClient.O
                 .addApi(Places.PLACE_DETECTION_API)
                 .addApi(LocationServices.API)
                 .build();
-//        .enableAutoManage(this, this)
 
         getNearByPlaces();
 

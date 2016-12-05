@@ -1,33 +1,19 @@
 package com.rushabhs.curiouspotato;
 
-import android.*;
 import android.Manifest;
-import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
-import android.location.Location;
-import android.os.AsyncTask;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
-import android.support.v4.app.NavUtils;
-import android.support.v4.app.TaskStackBuilder;
-import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
-import android.app.ActionBar;
 import android.os.Bundle;
-import android.text.Html;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
-import android.widget.ImageView;
 import android.widget.ListView;
-import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -37,14 +23,7 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.places.Place;
 import com.google.android.gms.location.places.PlaceLikelihood;
 import com.google.android.gms.location.places.PlaceLikelihoodBuffer;
-import com.google.android.gms.location.places.PlacePhotoMetadata;
-import com.google.android.gms.location.places.PlacePhotoMetadataBuffer;
-import com.google.android.gms.location.places.PlacePhotoMetadataResult;
 import com.google.android.gms.location.places.Places;
-
-import org.w3c.dom.Text;
-
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 
 public class MainActivity extends FragmentActivity  implements GoogleApiClient.OnConnectionFailedListener {
@@ -58,8 +37,9 @@ public class MainActivity extends FragmentActivity  implements GoogleApiClient.O
      */
     private static final int REQUEST_LOCATION = 2;
     CollectionPagerAdapter mCollectionPagerAdapter;
-    private GoogleApiClient mGoogleApiClient;
-    private static ArrayList<Place> places;
+    public GoogleApiClient mGoogleApiClient;
+    public static ArrayList<Place> places = new ArrayList<>();
+//    private static HashMap<Place, List<Integer>> places = new HashMap<>();
     /**
      * The {@link android.support.v4.view.ViewPager} that will display the object collection.
      */
@@ -80,16 +60,33 @@ public class MainActivity extends FragmentActivity  implements GoogleApiClient.O
         mViewPager = (ViewPager) findViewById(R.id.pager);
         mViewPager.setAdapter(mCollectionPagerAdapter);
 
+        // Connect to Google api client
         mGoogleApiClient = new GoogleApiClient
                 .Builder(this)
                 .addApi(Places.GEO_DATA_API)
                 .addApi(Places.PLACE_DETECTION_API)
                 .addApi(LocationServices.API)
-                .enableAutoManage(this, this)
                 .build();
+//        .enableAutoManage(this, this)
 
         getNearByPlaces();
-        new GetPlacesTask().execute("ChIJGVshXgp67ocR6Els7jrt2Nc");
+
+        for(int i=0; i<places.size(); i++){
+            places.get(i).freeze();
+        }
+        Log.d("Places value is ", Integer.toString(places.size()));
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        mGoogleApiClient.connect();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        mGoogleApiClient.disconnect();
     }
 
     @Override
@@ -104,24 +101,30 @@ public class MainActivity extends FragmentActivity  implements GoogleApiClient.O
     private void getNearByPlaces(){
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // Check Permissions Now
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this, android.Manifest.permission.ACCESS_FINE_LOCATION)) {
+            if (!ActivityCompat.shouldShowRequestPermissionRationale(this, android.Manifest.permission.ACCESS_FINE_LOCATION)) {
                 // Display UI and wait for user interaction
-            } else {
                 ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 2);
             }
         } else {
             // permission has been granted, continue as usual
             PendingResult<PlaceLikelihoodBuffer> result = Places.PlaceDetectionApi.getCurrentPlace(mGoogleApiClient, null);
+            Log.d("Services is Connected ", Boolean.toString(mGoogleApiClient.isConnected()));
             result.setResultCallback(new ResultCallback<PlaceLikelihoodBuffer>() {
                 @Override
                 public void onResult(PlaceLikelihoodBuffer likelyPlaces) {
                     for (PlaceLikelihood placeLikelihood : likelyPlaces) {
+                        Place p = placeLikelihood.getPlace();
                         Log.d("", String.format("Place '%s' with id '%s' has likelihood: %g",
-                                placeLikelihood.getPlace().getName(),
-                                placeLikelihood.getPlace().getId(),
+                                p.getName(),
+                                p.getId(),
                                 placeLikelihood.getLikelihood()));
+                        places.add(p);
+                        PlaceListAdapter adapter = new PlaceListAdapter(MainActivity.this, R.layout.card_object_view, places);
+                        ((ListView) findViewById(R.id.list)).setAdapter(adapter);
+                        Log.d("Gets here ", "Test");
+                        adapter.notifyDataSetChanged();
                     }
-                    likelyPlaces.release();
+//                    likelyPlaces.release();
                 }
             });
         }
@@ -134,32 +137,6 @@ public class MainActivity extends FragmentActivity  implements GoogleApiClient.O
             }
         }
     }
-
-//    @Override
-//    public boolean onOptionsItemSelected(MenuItem item) {
-//        switch (item.getItemId()) {
-//            case android.R.id.home:
-//                // This is called when the Home (Up) button is pressed in the action bar.
-//                // Create a simple intent that starts the hierarchical parent activity and
-//                // use NavUtils in the Support Package to ensure proper handling of Up.
-//                Intent upIntent = new Intent(this, MainActivity.class);
-//                if (NavUtils.shouldUpRecreateTask(this, upIntent)) {
-//                    // This activity is not part of the application's task, so create a new task
-//                    // with a synthesized back stack.
-//                    TaskStackBuilder.from(this)
-//                            // If there are ancestor activities, they should be added here.
-//                            .addNextIntent(upIntent)
-//                            .startActivities();
-//                    finish();
-//                } else {
-//                    // This activity is part of the application's task, so simply
-//                    // navigate up to the hierarchical parent activity.
-//                    NavUtils.navigateUpTo(this, upIntent);
-//                }
-//                return true;
-//        }
-//        return super.onOptionsItemSelected(item);
-//    }
 
     /**
      * A {@link android.support.v4.app.FragmentStatePagerAdapter} that returns a fragment
@@ -202,87 +179,11 @@ public class MainActivity extends FragmentActivity  implements GoogleApiClient.O
 
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-//            View rootView = inflater.inflate(R.layout.card_list_view, container, false);
-            View rootView = inflater.inflate(R.layout.card_object_view, container, false);
+            View rootView = inflater.inflate(R.layout.card_list_view, container, false);
+//            View rootView = inflater.inflate(R.layout.card_object_view, container, false);
             Bundle args = getArguments();
             Log.d("TextView value: ", args.getString(OBJECT_TYPE));
-            ((TextView) rootView.findViewById(R.id.text1)).setText(args.getString(OBJECT_TYPE));
            return rootView;
         }
     }
-
-    private class GetPlacesTask extends AsyncTask<String, Void, GetPlacesTask.AttributedPhoto> {
-        private int maxHeight;
-        private int maxWidth;
-        public GetPlacesTask(){
-        }
-        public GetPlacesTask(int width, int height){
-            maxWidth = width;
-            maxHeight = height;
-        }
-        protected AttributedPhoto doInBackground(String... s) {
-            if(s.length != 1){return null;}
-            return null;
-//            final String placeId = s[0];
-//            AttributedPhoto attributedPhoto = null;
-//
-//            PlacePhotoMetadataResult result = Places.GeoDataApi.getPlacePhotos(mGoogleApiClient, placeId).await();
-//
-//            if (result.getStatus().isSuccess()) {
-//                PlacePhotoMetadataBuffer photoMetadataBuffer = result.getPhotoMetadata();
-//                if (photoMetadataBuffer.getCount() > 0 && !isCancelled()) {
-//                    // Get the first bitmap and its attributions.
-//                    PlacePhotoMetadata photo = photoMetadataBuffer.get(0);
-//                    CharSequence attribution = photo.getAttributions();
-//                    // Load a scaled bitmap for this photo.
-//                    Bitmap image = photo.getPhoto(mGoogleApiClient).await()
-//                            .getBitmap();
-//
-//                    attributedPhoto = new AttributedPhoto(attribution, image);
-//                }
-//                // Release the PlacePhotoMetadataBuffer.
-//                photoMetadataBuffer.release();
-//            }
-//            return attributedPhoto;
-        }
-
-        protected void onProgressUpdate(Void... progress) {
-            // Nothing onProgress
-        }
-
-        protected void onPostExecute(AttributedPhoto result) {
-            if(result != null){
-                TextView mText = ((TextView) findViewById(R.id.text1));
-                // Successfully downloaded the photo. Display it on the screen.
-                ((ImageView) findViewById(R.id.placeImage)).setImageBitmap(result.bitmap);
-
-                // Display the attribution as HTML content if set.
-                if (result.attribution == null) {
-                    mText.setVisibility(View.GONE);
-                } else {
-                    mText.setVisibility(View.VISIBLE);
-                    mText.setText(Html.fromHtml(result.attribution.toString()));
-                }
-            }
-        }
-
-        /**
-         * Holder for an image and its attribution.
-         */
-        class AttributedPhoto {
-
-            public final CharSequence attribution;
-
-            public final Bitmap bitmap;
-
-            public AttributedPhoto(CharSequence attribution, Bitmap bitmap) {
-                this.attribution = attribution;
-                this.bitmap = bitmap;
-            }
-        }
-    }
 }
-
-//            ((ListView) rootView.findViewById(R.id.list)).setAdapter(null);
-//            ((TextView) rootView.findViewById(R.id.text1)).setText(args.getString(OBJECT_TYPE));
-

@@ -6,16 +6,26 @@
     android:layout_height="wrap_content"
     card_view:cardCornerRadius="4dp">
 
-        <TextView
-            android:id="@+id/text1"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textAlignment="center"/>
-
         <ImageView
             android:layout_width="match_parent"
-            android:layout_height="300dp"
+            android:layout_height="200dp"
             android:layout_gravity="center"
+            android:background="@color/colorPrimaryDark"
             android:id="@+id/placeImage"/>
 
+        <TextView
+            android:id="@+id/placeTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignLeft="@id/placeImage"
+            android:layout_alignTop="@id/placeImage"
+            android:layout_alignRight="@id/placeImage"
+            android:layout_alignBottom="@id/placeImage"
+            android:layout_gravity="bottom"
+            android:layout_margin="1dp"
+            android:textSize="20sp"
+            android:textColorHighlight="@color/cardview_dark_background"
+            android:background="@color/colorPrimary"
+            android:textColor="#FFFFFF"
+            android:textAlignment="center"/>
 </android.support.v7.widget.CardView>

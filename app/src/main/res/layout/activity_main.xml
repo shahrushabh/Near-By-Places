@@ -19,7 +19,7 @@
             android:layout_height="40sp"
             android:layout_gravity="top"
             android:textAlignment="center"
-            android:background="#DC7633"
+            android:background="@color/colorPrimary"
             android:paddingTop="4dp"/>
 
     </android.support.v4.view.ViewPager>

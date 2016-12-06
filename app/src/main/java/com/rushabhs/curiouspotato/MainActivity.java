@@ -3,19 +3,10 @@ package com.rushabhs.curiouspotato;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentActivity;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentStatePagerAdapter;
-import android.support.v4.view.ViewPager;
 import android.os.Bundle;
-import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
 import android.widget.ListView;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -55,9 +46,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
                 .build();
 
         getNearByPlaces();
-
-        ActionBar ab = getSupportActionBar();
-        Log.d("Actionbar title is ", ab.getTitle().toString());
     }
 
     @Override
@@ -78,6 +66,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
         // could not be established. Display an error message, or handle
         // the failure silently
 
+        // Must be overridden. Though it does not serve any purpose in this app it is required by Android Framework.
+
         // ...
     }
 
@@ -85,7 +75,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.view_history:
-                Log.d("History Action", " View History data");
                 return true;
 
             default:
@@ -105,27 +94,25 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
             PendingResult<PlaceLikelihoodBuffer> result = Places.PlaceDetectionApi.getCurrentPlace(mGoogleApiClient, null);
             boolean connected = mGoogleApiClient.isConnected();
             Log.d("Services is Connected ", Boolean.toString(mGoogleApiClient.isConnected()));
-            if(connected){
-                result.setResultCallback(new ResultCallback<PlaceLikelihoodBuffer>() {
-                    @Override
-                    public void onResult(PlaceLikelihoodBuffer likelyPlaces) {
-                        for (PlaceLikelihood placeLikelihood : likelyPlaces) {
-                            Place p = placeLikelihood.getPlace();
-                            Log.d("", String.format("Place '%s' with id '%s' has likelihood: %g",
-                                    p.getName(),
-                                    p.getId(),
-                                    placeLikelihood.getLikelihood()));
-                            p.freeze();
-                            places.add(p);
-                            PlaceListAdapter adapter = new PlaceListAdapter(MainActivity.this, R.layout.card_object_view, places);
-                            ((ListView) findViewById(R.id.list)).setAdapter(adapter);
-                            adapter.notifyDataSetChanged();
-                        }
-                        // Do not release resources as it will be used later to populate the list.
-                        // likelyPlaces.release();
+            result.setResultCallback(new ResultCallback<PlaceLikelihoodBuffer>() {
+                @Override
+                public void onResult(PlaceLikelihoodBuffer likelyPlaces) {
+                    for (PlaceLikelihood placeLikelihood : likelyPlaces) {
+                        Place p = placeLikelihood.getPlace();
+                        Log.d("", String.format("Place '%s' with id '%s' has likelihood: %g",
+                                p.getName(),
+                                p.getId(),
+                                placeLikelihood.getLikelihood()));
+                        p.freeze();
+                        places.add(p);
+                        PlaceListAdapter adapter = new PlaceListAdapter(MainActivity.this, R.layout.card_object_view, places);
+                        ((ListView) findViewById(R.id.list)).setAdapter(adapter);
+                        adapter.notifyDataSetChanged();
                     }
-                });
-            }
+                    // Do not release resources as it will be used later to populate the list.
+                    // likelyPlaces.release();
+                }
+            });
         }
     }
 

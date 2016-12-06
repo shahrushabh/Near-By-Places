@@ -1,20 +1,18 @@
 package com.rushabhs.curiouspotato;
 
 import android.content.Context;
-import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
-import android.util.Log;
+import android.support.v4.content.ContextCompat;
+import android.support.v4.util.LruCache;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
-import android.widget.BaseAdapter;
 import android.widget.ImageView;
-import android.widget.ListView;
 import android.widget.TextView;
 
-import com.google.android.gms.common.api.BooleanResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.places.Place;
@@ -33,10 +31,40 @@ public class PlaceListAdapter extends ArrayAdapter<Place> {
     private List<Place> places = null;
     private Context context = null;
 
+    // Cache for Images so that list does not seem laggy.
+    private LruCache<String, Bitmap> mMemoryCache;
+
     public PlaceListAdapter(Context context, int resource, List<Place> places) {
         super(context, resource, places);
         this.context = context;
         this.places = places;
+
+        // Get max available VM memory, exceeding this amount will throw an
+        // OutOfMemory exception. Stored in kilobytes as LruCache takes an
+        // int in its constructor.
+        final int maxMemory = (int) (Runtime.getRuntime().maxMemory() / 1024);
+
+        // Use 1/8th of the available memory for this memory cache.
+        final int cacheSize = maxMemory / 8;
+
+        mMemoryCache = new LruCache<String, Bitmap>(cacheSize) {
+            @Override
+            protected int sizeOf(String key, Bitmap bitmap) {
+                // The cache size will be measured in kilobytes rather than
+                // number of items.
+                return bitmap.getByteCount() / 1024;
+            }
+        };
+    }
+
+    private void addBitmapToMemoryCache(String key, Bitmap bitmap) {
+        if (getBitmapFromMemCache(key) == null) {
+            mMemoryCache.put(key, bitmap);
+        }
+    }
+
+    private Bitmap getBitmapFromMemCache(String key) {
+        return mMemoryCache.get(key);
     }
 
     @Override
@@ -67,7 +95,15 @@ public class PlaceListAdapter extends ArrayAdapter<Place> {
             ViewHolder viewHolder = (ViewHolder) convertView.getTag();
             imageView = viewHolder.imageView;
             textView = viewHolder.textView;
-            new GetPlacesTask(imageView, imageView.getMaxWidth(), imageView.getMaxHeight()).execute(getItem(i).getId());
+            final Bitmap bitmap = getBitmapFromMemCache(getItem(i).getId());
+            if (bitmap != null) {
+                imageView.setImageBitmap(bitmap);
+            } else {
+                // Default to no image, if not found.
+                Drawable res = ContextCompat.getDrawable(context, R.drawable.noimage);
+                imageView.setImageDrawable(res);
+                new GetPlacesTask(imageView, imageView.getMaxWidth(), imageView.getMaxHeight()).execute(getItem(i).getId());
+            }
         }
 
         textView.setText(getItem(i).getName());
@@ -95,9 +131,9 @@ public class PlaceListAdapter extends ArrayAdapter<Place> {
         private GoogleApiClient mGoogleApiClient;
         private ImageView imageView;
         private int width;
-        private int heigth;
+        private int height;
 
-        public GetPlacesTask(ImageView view, int width, int heigth){
+        public GetPlacesTask(ImageView view, int width, int height){
             // Connect to Google api client
             mGoogleApiClient = new GoogleApiClient
                     .Builder(context)
@@ -108,10 +144,17 @@ public class PlaceListAdapter extends ArrayAdapter<Place> {
             mGoogleApiClient.connect();
             this.imageView = view;
             this.width = width;
-            this.heigth = heigth;
+            this.height = height;
+        }
+
+        protected void onPreExecute(){
+            // Default to no image, if not found.
+            Drawable res = ContextCompat.getDrawable(context, R.drawable.noimage);
+            imageView.setImageDrawable(res);
         }
 
         protected AttributedPhoto doInBackground(String... p) {
+            if(isCancelled()){return null;}
             if(p.length != 1){return null;}
             String placeID = p[0];
             PlacePhotoMetadataResult result = Places.GeoDataApi.getPlacePhotos(mGoogleApiClient, placeID).await();
@@ -125,7 +168,9 @@ public class PlaceListAdapter extends ArrayAdapter<Place> {
                     CharSequence attribution = photo.getAttributions();
                     // Load a scaled bitmap for this photo.
                     Bitmap image = photo.getPhoto(mGoogleApiClient).await().getBitmap();
-                    if(image != null){Log.d("Test ", image.toString());}
+                    if(image != null){
+                        addBitmapToMemoryCache(placeID, image);
+                    }
                     attributedPhoto = new AttributedPhoto(attribution, image);
                 }
                 // Release the PlacePhotoMetadataBuffer.

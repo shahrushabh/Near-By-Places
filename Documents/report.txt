@@ -5,11 +5,11 @@ Project Analysis  - by Rushabh Shah
 
 1. Two places with defensive programing implementation 
     1.      File Name: LoginActivity.java
-            File Path: app / src / main / java / com / rushabhs / curiouspotato / MainActivity.java 
-            Relevant Lines: 101 - 107. 
-            Idea: This checks if user has given location permission to provide relevant results. If not it will show a prompt to do so.
+            File Path: app / src / main / java / com / rushabhs / curiouspotato / LoginActivity.java 
+            Relevant Lines: N/A. 
+            Idea: This file ensures a valid user is authenticated with Firebase and has approved to give location data for use in this application.
 
-    2.      File Name: LoginActivity.java
+    2.      File Name: MainActivity.java
             File Path: app / src / main / java / com / rushabhs / curiouspotato / MainActivity.java 
             Relevant Lines: 1st 133 – 139
             Idea: This verifies result from prompt before utilizing location data.
@@ -18,25 +18,51 @@ Project Analysis  - by Rushabh Shah
 |-----------        Code Smell Analysis         -----------------|
 
 1. Two places with code smell correction 
-    File Name: LoginActivity.java 
-    File Path: app / src / main / java / com / rushabhs / curiouspotato / LoginActivity.java 
-    Relevant Lines: 33 – 54, 77 – 91. 
-    Idea: 
+    1.      File Name: MainActivity.java and PlaceListAdapter.java
+            Smell Name: 'Large/God Class'
+            File Path: app / src / main / java / com / rushabhs / curiouspotato / MainActivity.java, app / src / main / java / com / rushabhs / curiouspotato / PlaceListAdapter.java
+            Relevant Lines: N/A. 
+            Idea: This combination of files fixes the 'Large / God Class' Code smell. The cards in the list are processed in separate file.
+
+    2.      File Name: LoginActivity.java, MainActivity.java, PlaceListAdapter.java
+            Smell Name: 'Lazy Class'
+            File Path: app / src / main / java / com / rushabhs / curiouspotato / LoginActivity.java, app / src / main / java / com / rushabhs / curiouspotato / MainActivity.java, app / src / main / java / com / rushabhs / curiouspotato / PlaceListAdapter.java
+            Relevant Lines: N / A
+            Idea: This is applicable to all classes. All classes serve an important role in this application and are essential for app to run.
 
 -------------------------------------------------------------------
 |-----------   Inter-process / Thread Analysis   -----------------|
 
 1. Inter process / thread communication.
-    File Name: LoginActivity.java 
-    File Path: app / src / main / java / com / rushabhs / curiouspotato / LoginActivity.java 
-    Relevant Lines: 33 – 54, 77 – 91. 
-    Idea: 
+    File Name: MainActivity.java, PlaceListAdapter.java 
+    File Path: app / src / main / java / com / rushabhs / curiouspotato / MainActivity.java, app / src / main / java / com / rushabhs / curiouspotato / PlaceListAdapter.java
+    Relevant Lines: N / A 
+    Idea: This two files are have explicit and implicit communication. The application runs in a single process. Though the MainActivity handles getting the current location of the device and inflating layout, in this case a listview. This is occurring in the main / UI thread. The list view is populated by PlaceListAdapter. This adapter configures each of the card on the list based on the place id and image to set. It also caches the images for future reference. This has multiple benefits. It reduces the number of API calls made making it more cost effective and increases performance of the app when swiped much faster. It is necessary since Android framework recycles the 'card' views that are not present on screen.
 
 -------------------------------------------------------------------
 |-----------       Design Pattern Analysis       -----------------|
 
-1. Two places with defensive programing implementation 
-    File Name: LoginActivity.java 
-    File Path: app / src / main / java / com / rushabhs / curiouspotato / LoginActivity.java 
-    Relevant Lines: 33 – 54, 77 – 91. 
-    Idea: 
+1. Three Design Patterns. 
+    1.      File Name: LoginActivity.java
+            Smell Name: Proxy Pattern
+            File Path: app / src / main / java / com / rushabhs / curiouspotato / Login.java
+            Relevant Lines: N/A.
+            Idea: This pattern prevents unauthorized use of the API and application.
+
+    2.      File Name: MainActivity.java
+            Smell Name: Observer Pattern 
+            File Path: app / src / main / java / com / rushabhs / curiouspotato / MainActivity.java
+            Relevant Lines: N / A
+            Idea: This class keeps track of the location and updates the list view and info based on most recent data.
+
+    3.      File Name: PlaceListAdapter.java
+            Smell Name: Iterator Pattern 
+            File Path: app / src / main / java / com / rushabhs / curiouspotato / PlaceListAdapter.java
+            Relevant Lines: N / A
+            Idea: For each of the place detected nearby, this class iterates over those places and gets data to populate the list view.
+
+    3.      File Name: LoginActivity.java
+            Smell Name: Mediator Pattern 
+            File Path: app / src / main / java / com / rushabhs / curiouspotato / LoginActivity.java
+            Relevant Lines: N / A
+            Idea: This serves as a mediator pattern because it determines whether user has authorized access to the device location and navigates to specific activity.

@@ -31,7 +31,6 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         setContentView(R.layout.activity_login);
 
         sharedPref = getSharedPreferences("MyPreference", Context.MODE_PRIVATE);
-        Log.d("Auto_Login value", Boolean.toString(sharedPref.getBoolean("auto_login", true)));
         if(sharedPref.getBoolean("auto_login", false)){
             Intent intent = new Intent(this, MainActivity.class);
             startActivity(intent);

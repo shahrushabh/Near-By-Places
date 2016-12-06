@@ -1,0 +1,42 @@
+Project Analysis  - by Rushabh Shah
+
+-------------------------------------------------------------------
+|-----------    Defensive Programing Analysis    -----------------|
+
+1. Two places with defensive programing implementation 
+    1.      File Name: LoginActivity.java
+            File Path: app / src / main / java / com / rushabhs / curiouspotato / MainActivity.java 
+            Relevant Lines: 101 - 107. 
+            Idea: This checks if user has given location permission to provide relevant results. If not it will show a prompt to do so.
+
+    2.      File Name: LoginActivity.java
+            File Path: app / src / main / java / com / rushabhs / curiouspotato / MainActivity.java 
+            Relevant Lines: 1st 133 – 139
+            Idea: This verifies result from prompt before utilizing location data.
+
+-------------------------------------------------------------------
+|-----------        Code Smell Analysis         -----------------|
+
+1. Two places with code smell correction 
+    File Name: LoginActivity.java 
+    File Path: app / src / main / java / com / rushabhs / curiouspotato / LoginActivity.java 
+    Relevant Lines: 33 – 54, 77 – 91. 
+    Idea: 
+
+-------------------------------------------------------------------
+|-----------   Inter-process / Thread Analysis   -----------------|
+
+1. Inter process / thread communication.
+    File Name: LoginActivity.java 
+    File Path: app / src / main / java / com / rushabhs / curiouspotato / LoginActivity.java 
+    Relevant Lines: 33 – 54, 77 – 91. 
+    Idea: 
+
+-------------------------------------------------------------------
+|-----------       Design Pattern Analysis       -----------------|
+
+1. Two places with defensive programing implementation 
+    File Name: LoginActivity.java 
+    File Path: app / src / main / java / com / rushabhs / curiouspotato / LoginActivity.java 
+    Relevant Lines: 33 – 54, 77 – 91. 
+    Idea: 

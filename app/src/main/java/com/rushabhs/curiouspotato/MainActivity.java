@@ -56,11 +56,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
 
         getNearByPlaces();
 
-        for(int i=0; i<places.size(); i++){
-            places.get(i).freeze();
-        }
-        Log.d("Places value is ", Integer.toString(places.size()));
-
         ActionBar ab = getSupportActionBar();
         Log.d("Actionbar title is ", ab.getTitle().toString());
     }
@@ -108,25 +103,29 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
         } else {
             // permission has been granted, continue as usual
             PendingResult<PlaceLikelihoodBuffer> result = Places.PlaceDetectionApi.getCurrentPlace(mGoogleApiClient, null);
+            boolean connected = mGoogleApiClient.isConnected();
             Log.d("Services is Connected ", Boolean.toString(mGoogleApiClient.isConnected()));
-            result.setResultCallback(new ResultCallback<PlaceLikelihoodBuffer>() {
-                @Override
-                public void onResult(PlaceLikelihoodBuffer likelyPlaces) {
-                    for (PlaceLikelihood placeLikelihood : likelyPlaces) {
-                        Place p = placeLikelihood.getPlace();
-                        Log.d("", String.format("Place '%s' with id '%s' has likelihood: %g",
-                                p.getName(),
-                                p.getId(),
-                                placeLikelihood.getLikelihood()));
-                        places.add(p);
-                        PlaceListAdapter adapter = new PlaceListAdapter(MainActivity.this, R.layout.card_object_view, places);
-                        ((ListView) findViewById(R.id.list)).setAdapter(adapter);
-                        Log.d("Gets here ", "Test");
-                        adapter.notifyDataSetChanged();
+            if(connected){
+                result.setResultCallback(new ResultCallback<PlaceLikelihoodBuffer>() {
+                    @Override
+                    public void onResult(PlaceLikelihoodBuffer likelyPlaces) {
+                        for (PlaceLikelihood placeLikelihood : likelyPlaces) {
+                            Place p = placeLikelihood.getPlace();
+                            Log.d("", String.format("Place '%s' with id '%s' has likelihood: %g",
+                                    p.getName(),
+                                    p.getId(),
+                                    placeLikelihood.getLikelihood()));
+                            p.freeze();
+                            places.add(p);
+                            PlaceListAdapter adapter = new PlaceListAdapter(MainActivity.this, R.layout.card_object_view, places);
+                            ((ListView) findViewById(R.id.list)).setAdapter(adapter);
+                            adapter.notifyDataSetChanged();
+                        }
+                        // Do not release resources as it will be used later to populate the list.
+                        // likelyPlaces.release();
                     }
-//                    likelyPlaces.release();
-                }
-            });
+                });
+            }
         }
     }
 

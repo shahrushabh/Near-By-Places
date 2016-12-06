@@ -67,10 +67,10 @@ public class PlaceListAdapter extends ArrayAdapter<Place> {
             ViewHolder viewHolder = (ViewHolder) convertView.getTag();
             imageView = viewHolder.imageView;
             textView = viewHolder.textView;
+            new GetPlacesTask(imageView, imageView.getMaxWidth(), imageView.getMaxHeight()).execute(getItem(i).getId());
         }
 
         textView.setText(getItem(i).getName());
-        new GetPlacesTask(imageView, imageView.getMaxWidth(), imageView.getMaxHeight()).execute(getItem(i).getId());
 
         return convertView;
     }

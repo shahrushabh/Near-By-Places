@@ -1,6 +1,8 @@
 package com.rushabhs.curiouspotato;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
@@ -21,11 +23,20 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
     private static final String TAG = "SignInActivity";
 
     private GoogleApiClient mGoogleApiClient;
+    private SharedPreferences sharedPref;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
+
+        sharedPref = getSharedPreferences("MyPreference", Context.MODE_PRIVATE);
+        Log.d("Auto_Login value", Boolean.toString(sharedPref.getBoolean("auto_login", true)));
+        if(sharedPref.getBoolean("auto_login", false)){
+            Intent intent = new Intent(this, MainActivity.class);
+            startActivity(intent);
+        } // Skip login step.
+
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestEmail()
                 .build();
@@ -65,11 +76,17 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
 
     private void handleSignInResult(GoogleSignInResult result) {
         Log.d(TAG, "handleSignInResult:" + result.isSuccess());
+        SharedPreferences.Editor editor = sharedPref.edit();
         if (result.isSuccess()) {
             // Signed in successfully, show authenticated UI.
             GoogleSignInAccount acct = result.getSignInAccount();
+            editor.putBoolean("auto_login", true);
+            editor.apply();
             Intent intent = new Intent(this, MainActivity.class);
             startActivity(intent);
+        }else{
+            editor.putBoolean("auto_login", false);
+            editor.apply();
         }
     }
 

@@ -9,8 +9,11 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.os.Bundle;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
@@ -26,7 +29,7 @@ import com.google.android.gms.location.places.PlaceLikelihoodBuffer;
 import com.google.android.gms.location.places.Places;
 import java.util.ArrayList;
 
-public class MainActivity extends FragmentActivity implements GoogleApiClient.OnConnectionFailedListener {
+public class MainActivity extends AppCompatActivity implements GoogleApiClient.OnConnectionFailedListener {
 
     /**
      * The {@link android.support.v4.view.PagerAdapter} that will provide fragments representing
@@ -36,24 +39,12 @@ public class MainActivity extends FragmentActivity implements GoogleApiClient.On
      * allowing navigation between objects in a potentially large collection.
      */
     private static final int REQUEST_LOCATION = 2;
-    CollectionPagerAdapter mCollectionPagerAdapter;
     public GoogleApiClient mGoogleApiClient;
     public static ArrayList<Place> places = new ArrayList<>();
-//    private static HashMap<Place, List<Integer>> places = new HashMap<>();
-    /**
-     * The {@link android.support.v4.view.ViewPager} that will display the object collection.
-     */
-    ViewPager mViewPager;
 
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        mCollectionPagerAdapter = new CollectionPagerAdapter(getSupportFragmentManager());
-
-        // Set up the ViewPager, attaching the adapter.
-        mViewPager = (ViewPager) findViewById(R.id.pager);
-        mViewPager.setAdapter(mCollectionPagerAdapter);
 
         // Connect to Google api client
         mGoogleApiClient = new GoogleApiClient
@@ -69,6 +60,9 @@ public class MainActivity extends FragmentActivity implements GoogleApiClient.On
             places.get(i).freeze();
         }
         Log.d("Places value is ", Integer.toString(places.size()));
+
+        ActionBar ab = getSupportActionBar();
+        Log.d("Actionbar title is ", ab.getTitle().toString());
     }
 
     @Override
@@ -90,6 +84,18 @@ public class MainActivity extends FragmentActivity implements GoogleApiClient.On
         // the failure silently
 
         // ...
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.view_history:
+                Log.d("History Action", " View History data");
+                return true;
+
+            default:
+                return super.onOptionsItemSelected(item);
+        }
     }
 
     private void getNearByPlaces(){
@@ -129,55 +135,6 @@ public class MainActivity extends FragmentActivity implements GoogleApiClient.On
             if(grantResults.length == 1 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 getNearByPlaces();
             }
-        }
-    }
-
-    /**
-     * A {@link android.support.v4.app.FragmentStatePagerAdapter} that returns a fragment
-     * representing an object in the collection.
-     */
-    public static class CollectionPagerAdapter extends FragmentStatePagerAdapter {
-
-        private String[] types = {"All", "Cafe", "Airport", "Bank", "School", "Bar", "Lodging", "Pharmacy"};
-
-        public CollectionPagerAdapter(FragmentManager fm) {
-            super(fm);
-        }
-
-        @Override
-        public Fragment getItem(int i) {
-            Fragment fragment = new CategoryFragment();
-            Bundle args = new Bundle();
-            args.putString(CategoryFragment.OBJECT_TYPE,types[i]);
-            fragment.setArguments(args);
-            return fragment;
-        }
-
-        @Override
-        public int getCount() {
-            return types.length;
-        }
-
-        @Override
-        public CharSequence getPageTitle(int position) {
-            return types[position];
-        }
-    }
-
-    /**
-     * A dummy fragment representing a section of the app, but that simply displays types of places.
-     */
-    public static class CategoryFragment extends Fragment {
-
-        public static final String OBJECT_TYPE = "type";
-
-        @Override
-        public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-            View rootView = inflater.inflate(R.layout.card_list_view, container, false);
-//            View rootView = inflater.inflate(R.layout.card_object_view, container, false);
-            Bundle args = getArguments();
-            Log.d("TextView value: ", args.getString(OBJECT_TYPE));
-           return rootView;
         }
     }
 }

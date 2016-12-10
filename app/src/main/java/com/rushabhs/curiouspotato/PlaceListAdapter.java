@@ -1,17 +1,24 @@
 package com.rushabhs.curiouspotato;
 
+import android.content.ContentValues;
 import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
+import android.support.design.widget.Snackbar;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.util.LruCache;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
@@ -20,6 +27,8 @@ import com.google.android.gms.location.places.PlacePhotoMetadata;
 import com.google.android.gms.location.places.PlacePhotoMetadataBuffer;
 import com.google.android.gms.location.places.PlacePhotoMetadataResult;
 import com.google.android.gms.location.places.Places;
+
+import java.io.ByteArrayOutputStream;
 import java.util.List;
 
 /**
@@ -30,6 +39,8 @@ public class PlaceListAdapter extends ArrayAdapter<Place> {
 
     private List<Place> places = null;
     private Context context = null;
+    private BitmapDbHelper bitmapDbHelper;
+    private SQLiteDatabase sqLiteDatabase;
 
     // Cache for Images so that list does not seem laggy.
     private LruCache<String, Bitmap> mMemoryCache;
@@ -38,6 +49,7 @@ public class PlaceListAdapter extends ArrayAdapter<Place> {
         super(context, resource, places);
         this.context = context;
         this.places = places;
+        bitmapDbHelper = new BitmapDbHelper(context);
 
         // Get max available VM memory, exceeding this amount will throw an
         // OutOfMemory exception. Stored in kilobytes as LruCache takes an
@@ -86,28 +98,39 @@ public class PlaceListAdapter extends ArrayAdapter<Place> {
     public View getView(int i, View convertView, ViewGroup parent) {
         ImageView imageView;
         TextView textView;
+        ImageButton imageButton;
         if (convertView == null) {
             convertView = LayoutInflater.from(context).inflate(R.layout.card_object_view, parent, false);
             imageView = (ImageView) convertView.findViewById(R.id.placeImage);
             textView = (TextView) convertView.findViewById(R.id.placeTitle);
-            convertView.setTag(new ViewHolder(imageView, textView));
+            imageButton = (ImageButton) convertView.findViewById(R.id.save);
+            convertView.setTag(new ViewHolder(imageView, imageButton, textView));
         } else {
             ViewHolder viewHolder = (ViewHolder) convertView.getTag();
             imageView = viewHolder.imageView;
             textView = viewHolder.textView;
-            final Bitmap bitmap = getBitmapFromMemCache(getItem(i).getId());
-            if (bitmap != null) {
-                imageView.setImageBitmap(bitmap);
-            } else {
-                // Default to no image, if not found.
-                Drawable res = ContextCompat.getDrawable(context, R.drawable.noimage);
-                imageView.setImageDrawable(res);
-                new GetPlacesTask(imageView, imageView.getMaxWidth(), imageView.getMaxHeight()).execute(getItem(i).getId());
-            }
+            imageButton = viewHolder.imageButton;
+        }
+        final Bitmap bitmap = getBitmapFromMemCache(getItem(i).getId());
+        if (bitmap != null) {
+            imageView.setImageBitmap(bitmap);
+        } else {
+            // Default to no image, if not found.
+            Drawable res = ContextCompat.getDrawable(context, R.drawable.noimage);
+            imageView.setImageDrawable(res);
+            imageButton.setImageResource(R.drawable.save);
+            new GetPlacesTask(imageView, imageView.getMaxWidth(), imageView.getMaxHeight()).execute(getItem(i).getId());
         }
 
         textView.setText(getItem(i).getName());
 
+        imageButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                // Save this image to SQLite.
+                new SavePlacesTask(((ViewGroup) view.getParent().getParent())).execute();
+            }
+        });
         return convertView;
     }
 
@@ -116,11 +139,13 @@ public class PlaceListAdapter extends ArrayAdapter<Place> {
      */
     private static class ViewHolder {
         public final ImageView imageView;
+        public final ImageButton imageButton;
         public final TextView textView;
 
-        public ViewHolder(ImageView imageView, TextView textView) {
+        public ViewHolder(ImageView imageView, ImageButton imageButton, TextView textView) {
             this.imageView = imageView;
             this.textView = textView;
+            this.imageButton = imageButton;
         }
     }
 
@@ -151,6 +176,7 @@ public class PlaceListAdapter extends ArrayAdapter<Place> {
             // Default to no image, if not found.
             Drawable res = ContextCompat.getDrawable(context, R.drawable.noimage);
             imageView.setImageDrawable(res);
+            Log.d("NOT Loaded from cache", "");
         }
 
         protected AttributedPhoto doInBackground(String... p) {
@@ -205,6 +231,48 @@ public class PlaceListAdapter extends ArrayAdapter<Place> {
                 this.attribution = attribution;
                 this.bitmap = bitmap;
             }
+        }
+    }
+
+    /**
+     * AsyncTask to add images to SQLite db. Handled in separate thread.
+     */
+    private class SavePlacesTask extends AsyncTask<Void, Void, Void> {
+        private String placeName;
+        private Bitmap imageBitmap;
+        private View rootView;
+
+        public SavePlacesTask(View rootView){
+            sqLiteDatabase = bitmapDbHelper.getWritableDatabase();
+            this.rootView = rootView;
+            this.imageBitmap = ((BitmapDrawable) ((ImageView) rootView.findViewById(R.id.placeImage)).getDrawable()).getBitmap();
+            this.placeName = ((TextView) rootView.findViewById(R.id.placeTitle)).getText().toString();
+        }
+
+        protected void onPreExecute(){
+        }
+
+        protected Void doInBackground(Void... v) {
+            if(v.length == 0 || placeName.equals("")){return null;}
+            ByteArrayOutputStream stream = new ByteArrayOutputStream();
+            imageBitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
+            byte[] imgBytes = stream.toByteArray();
+            ContentValues cv = new ContentValues();
+            cv.put(BitmapDbHelper.KEY_NAME, placeName);
+            cv.put(BitmapDbHelper.KEY_NAME, imgBytes);
+            sqLiteDatabase.insert(BitmapDbHelper.DB_TABLE, null, cv);
+            return null;
+        }
+
+        protected void onProgressUpdate(Void... progress) {
+            // Nothing onProgress
+        }
+
+        protected void onPostExecute(Void result) {
+            // Update the icon in for this view.
+            ((ImageView) rootView.findViewById(R.id.save)).setImageResource(R.drawable.saved);
+            String text = "Saved "  + placeName;
+            Snackbar.make(rootView,text,Snackbar.LENGTH_SHORT).show();
         }
     }
 }

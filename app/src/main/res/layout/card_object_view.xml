@@ -6,21 +6,36 @@
     android:layout_height="wrap_content"
     card_view:cardCornerRadius="4dp">
 
-        <ImageView
+        <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="200dp"
-            android:layout_gravity="center"
-            android:background="@color/colorPrimaryDark"
-            android:id="@+id/placeImage"/>
+            android:layout_height="wrap_content"
+            android:id="@+id/placeImageView">
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="200dp"
+                    android:layout_gravity="center"
+                    android:background="@color/colorPrimaryDark"
+                    android:id="@+id/placeImage"/>
+
+                <ImageButton
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:id="@+id/save"
+                    android:layout_alignRight="@id/placeImage"
+                    android:layout_alignBottom="@id/placeImage"
+                    android:layout_marginBottom="25dp"
+                    android:layout_marginRight="10dp"
+                    android:background="@null"/>
+        </RelativeLayout>
 
         <TextView
             android:id="@+id/placeTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_alignLeft="@id/placeImage"
-            android:layout_alignTop="@id/placeImage"
-            android:layout_alignRight="@id/placeImage"
-            android:layout_alignBottom="@id/placeImage"
+            android:layout_alignLeft="@id/placeImageView"
+            android:layout_alignTop="@id/placeImageView"
+            android:layout_alignRight="@id/placeImageView"
+            android:layout_alignBottom="@id/placeImageView"
             android:layout_gravity="bottom"
             android:layout_margin="1dp"
             android:textSize="20sp"

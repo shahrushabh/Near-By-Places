@@ -265,11 +265,11 @@ public class PlaceListAdapter extends ArrayAdapter<Place> {
             sqLiteDatabase.insert(BitmapDbHelper.DB_TABLE, null, cv);
 
             // SAVE BITMAP TO INTERNAL STORAGE.
-            FileOutputStream fos;
+            FileOutputStream outputStream;
             try {
-                fos = context.openFileOutput(placeName, Context.MODE_PRIVATE);
-                imageBitmap.compress(Bitmap.CompressFormat.PNG, 100, fos);
-                fos.close();
+                outputStream = context.openFileOutput(placeName, Context.MODE_PRIVATE);
+                imageBitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream);
+                outputStream.close();
             }
             catch (FileNotFoundException e) {
                 Log.e("Error: ", "file not found");

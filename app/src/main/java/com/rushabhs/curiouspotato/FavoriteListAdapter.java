@@ -120,11 +120,11 @@ public class FavoriteListAdapter extends ArrayAdapter<String> {
             placeName = v[0];
             // LOAD BITMAP FROM INTERNAL STORAGE
             Bitmap bitmap = null;
-            FileInputStream fis;
+            FileInputStream inputStream;
             try {
-                fis = context.openFileInput(placeName);
-                bitmap = BitmapFactory.decodeStream(fis);
-                fis.close();
+                inputStream = context.openFileInput(placeName);
+                bitmap = BitmapFactory.decodeStream(inputStream);
+                inputStream.close();
             }
             catch (FileNotFoundException e) {
                 Log.e("ERROR " , "file not found");

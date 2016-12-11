@@ -23,7 +23,7 @@ public class BitmapDbHelper extends SQLiteOpenHelper {
 
     // Table create statement
     private static final String CREATE_TABLE_IMAGE = "CREATE TABLE " + DB_TABLE + "("+
-            KEY_NAME + " VARCHAR(50);";
+            KEY_NAME + " VARCHAR(50));";
 
     public BitmapDbHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);

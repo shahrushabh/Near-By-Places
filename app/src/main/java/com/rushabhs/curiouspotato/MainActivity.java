@@ -1,11 +1,14 @@
 package com.rushabhs.curiouspotato;
 
 import android.Manifest;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.support.v4.app.ActivityCompat;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ListView;
 
@@ -36,6 +39,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
 
         // Connect to Google api client
         mGoogleApiClient = new GoogleApiClient
@@ -61,6 +66,12 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
     }
 
     @Override
+    public boolean onPrepareOptionsMenu(final Menu menu) {
+        getMenuInflater().inflate(R.menu.menu, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
     public void onConnectionFailed(ConnectionResult result) {
         // An unresolvable error has occurred and a connection to Google APIs
         // could not be established. Display an error message, or handle
@@ -74,7 +85,9 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.view_history:
+            case R.id.favorites:
+                Intent i = new Intent(this, Favories.class);
+                startActivity(i);
                 return true;
 
             default:
@@ -92,7 +105,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
         } else {
             // permission has been granted, continue as usual
             PendingResult<PlaceLikelihoodBuffer> result = Places.PlaceDetectionApi.getCurrentPlace(mGoogleApiClient, null);
-            boolean connected = mGoogleApiClient.isConnected();
             Log.d("Services is Connected ", Boolean.toString(mGoogleApiClient.isConnected()));
             result.setResultCallback(new ResultCallback<PlaceLikelihoodBuffer>() {
                 @Override

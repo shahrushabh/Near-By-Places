@@ -1,9 +1,0 @@
-<menu xmlns:android="http://schemas.android.com/apk/res/android"
-      xmlns:app="http://schemas.android.com/apk/res-auto">
-    <!-- "Mark Favorite", should appear as action button if possible -->
-    <item
-        android:id="@+id/view_history"
-        android:icon="@drawable/history"
-        android:title="@string/history"
-        app:showAsAction="ifRoom|withText"/>
-</menu>

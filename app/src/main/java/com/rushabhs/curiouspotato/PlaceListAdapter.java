@@ -29,6 +29,9 @@ import com.google.android.gms.location.places.PlacePhotoMetadataResult;
 import com.google.android.gms.location.places.Places;
 
 import java.io.ByteArrayOutputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -238,6 +241,7 @@ public class PlaceListAdapter extends ArrayAdapter<Place> {
      * AsyncTask to add images to SQLite db. Handled in separate thread.
      */
     private class SavePlacesTask extends AsyncTask<Void, Void, Void> {
+        // Handle saving place in background.
         private String placeName;
         private Bitmap imageBitmap;
         private View rootView;
@@ -250,17 +254,32 @@ public class PlaceListAdapter extends ArrayAdapter<Place> {
         }
 
         protected void onPreExecute(){
+            ((ImageView) rootView.findViewById(R.id.save)).setImageResource(R.drawable.saved);
         }
 
         protected Void doInBackground(Void... v) {
-            if(v.length == 0 || placeName.equals("")){return null;}
             ByteArrayOutputStream stream = new ByteArrayOutputStream();
             imageBitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
-            byte[] imgBytes = stream.toByteArray();
             ContentValues cv = new ContentValues();
             cv.put(BitmapDbHelper.KEY_NAME, placeName);
-            cv.put(BitmapDbHelper.KEY_NAME, imgBytes);
             sqLiteDatabase.insert(BitmapDbHelper.DB_TABLE, null, cv);
+
+            // SAVE BITMAP TO INTERNAL STORAGE.
+            FileOutputStream fos;
+            try {
+                fos = context.openFileOutput(placeName, Context.MODE_PRIVATE);
+                imageBitmap.compress(Bitmap.CompressFormat.PNG, 100, fos);
+                fos.close();
+            }
+            catch (FileNotFoundException e) {
+                Log.e("Error: ", "file not found");
+                e.printStackTrace();
+            }
+            catch (IOException e) {
+                Log.e("Error: ", "io exception");
+                e.printStackTrace();
+            }
+
             return null;
         }
 
@@ -270,7 +289,6 @@ public class PlaceListAdapter extends ArrayAdapter<Place> {
 
         protected void onPostExecute(Void result) {
             // Update the icon in for this view.
-            ((ImageView) rootView.findViewById(R.id.save)).setImageResource(R.drawable.saved);
             String text = "Saved "  + placeName;
             Snackbar.make(rootView,text,Snackbar.LENGTH_SHORT).show();
         }

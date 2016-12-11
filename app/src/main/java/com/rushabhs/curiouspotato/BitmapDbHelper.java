@@ -20,12 +20,10 @@ public class BitmapDbHelper extends SQLiteOpenHelper {
 
     // column names
     public static final String KEY_NAME = "image_name";
-    public static final String KEY_IMAGE = "image_data";
 
     // Table create statement
     private static final String CREATE_TABLE_IMAGE = "CREATE TABLE " + DB_TABLE + "("+
-            KEY_NAME + " VARCHAR(50)," +
-            KEY_IMAGE + " BLOB);";
+            KEY_NAME + " VARCHAR(50);";
 
     public BitmapDbHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
